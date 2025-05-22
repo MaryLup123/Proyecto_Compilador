@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Compilador</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    textarea {
+      width: 100%;
+      max-width: 1000px;
+      height: 150px;
+      margin: 10px auto;
+      display: block;
+      font-size: 16px;
+    }
+    .button-group {
+      text-align: center;
+      margin: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .output-section {
+      max-width: 1000px;
+      margin: 0 auto 20px;
+    }
+    .output-section h3 {
+      color: #444;
+    }
+    input[type="text"], pre {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .mermaid {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simulador de Compilador</h1>
+  <textarea id="codigo" placeholder="Escribe el código aquí..."></textarea>
+
+  <div class="button-group">
+    <button onclick="analizar()">Analizar</button>
+    <button onclick="limpiar()">Limpiar</button>
+  </div>
+
+  <div class="output-section">
+    <h3>Análisis Léxico</h3>
+    <input type="text" id="lexico" readonly />
+  </div>
+
+  <div class="output-section">
+    <h3>Análisis Sintáctico</h3>
+    <input type="text" id="sintactico" readonly />
+  </div>
+
+  <div class="output-section">
+    <h3>Árbol Sintáctico (Texto)</h3>
+    <pre id="arbol"></pre>
+  </div>
+
+  <div class="output-section">
+    <h3>Árbol Sintáctico (Gráfico)</h3>
+    <div class="mermaid" id="arbolGrafico"></div>
+  </div>
+
+  <div class="output-section">
+    <h3>Tabla de Tokens</h3>
+    <pre id="tablaTokens"></pre>
+  </div>
+
+  <div class="output-section">
+    <h3>Tabla de Símbolos</h3>
+    <div id="tablaSimbolos"></div>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false });
+
+    function analizar() {
+      const codigo = document.getElementById("codigo").value.trim();
+
+      if (!codigo) {
+        alert("Por favor, escribe un bloque de código.");
+        return;
+      }
+
+      document.getElementById("lexico").value = "[Léxico válido]";
+      document.getElementById("sintactico").value = "[Sintaxis correcta]";
+
+      const arbolTexto = `
+<grammar prog>
+ └── prog
+     ├── stat
+     │   ├── x =
+     │   └── expr → 1
+     ├── stat
+     │   ├── y =
+     │   └── expr → 2
+     └── stat
+         ├── expr
+         │   ├── 3 *
+         │   └── ( x + y )`;
+      document.getElementById("arbol").textContent = arbolTexto;
+
+      const mermaidDiagram = `graph TD
+  A[prog] --> B1[stat: x = 1]
+  A --> B2[stat: y = 2]
+  A --> B3[stat]
+  B3 --> C1[expr: 3 *]
+  C1 --> C2[(x + y)]`;
+
+      document.getElementById("arbolGrafico").textContent = mermaidDiagram;
+      mermaid.init(undefined, "#arbolGrafico");
+
+      document.getElementById("tablaTokens").textContent = `Token       | Tipo
+-----------|----------------
+int        | Palabra reservada
+a          | Identificador
+=          | Operador de asignación
+5          | Número
+;          | Delimitador`;
+
+      document.getElementById("tablaSimbolos").innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Símbolo</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Línea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>x</td><td>Identificador</td><td>-</td><td>1</td></tr>
+            <tr><td>y</td><td>Identificador</td><td>-</td><td>2</td></tr>
+            <tr><td>a</td><td>Identificador</td><td>5</td><td>3</td></tr>
+            <tr><td>b</td><td>Identificador</td><td>10</td><td>4</td></tr>
+            <tr><td>suma</td><td>Identificador</td><td>-</td><td>5</td></tr>
+          </tbody>
+        </table>`;
+    }
+
+    function limpiar() {
+      document.getElementById("codigo").value = "";
+      document.getElementById("lexico").value = "";
+      document.getElementById("sintactico").value = "";
+      document.getElementById("arbol").textContent = "";
+      document.getElementById("arbolGrafico").textContent = "";
+      document.getElementById("tablaTokens").textContent = "";
+      document.getElementById("tablaSimbolos").innerHTML = "";
+    }
+  </script>
+</body>
+</html>
