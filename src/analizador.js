@@ -57,14 +57,7 @@ function analizar() {
   if (ultimoArbol) {
     dibujarArbolSintactico(ultimoArbol);
   } else {
-    document.getElementById("arbolGrafico").innerHTML = `
-graph TD
-  A[<grammar prog>] --> B[prog]
-  B --> C[declaración]
-  B --> D[expresión]
-`;
-mermaid.init(undefined, "#arbolGrafico");
-
+    document.getElementById("arbolVisual").innerHTML = "";
   }
 }
 

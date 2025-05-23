@@ -1,189 +1,148 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Simulador de Compilador</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
+      font-family: sans-serif;
+      margin: 20px;
+      background: #f8f8f8;
     }
-    h1 {
-      text-align: center;
-      color: #333;
+    textarea, input, pre {
+      width: 100%;
+      max-width: 1000px;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
     textarea {
-      width: 100%;
-      max-width: 1000px;
       height: 150px;
-      margin: 10px auto;
-      display: block;
-      font-size: 16px;
-    }
-    .button-group {
-      text-align: center;
-      margin: 15px;
     }
     button {
+      margin: 5px;
       padding: 10px 20px;
-      margin: 0 10px;
       font-size: 16px;
-      cursor: pointer;
     }
-    .output-section {
-      max-width: 1000px;
-      margin: 0 auto 20px;
+    .section {
+      margin-bottom: 20px;
     }
-    .output-section h3 {
-      color: #444;
-    }
-    input[type="text"], pre {
-      width: 100%;
-      padding: 10px;
-      font-size: 15px;
-      background: #fff;
+    svg {
       border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-    }
-    .mermaid {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
       margin-top: 10px;
+      max-width: 1000px;
     }
   </style>
 </head>
 <body>
   <h1>Simulador de Compilador</h1>
   <textarea id="codigo" placeholder="Escribe el código aquí..."></textarea>
-
-  <div class="button-group">
+  <div>
     <button onclick="analizar()">Analizar</button>
     <button onclick="limpiar()">Limpiar</button>
   </div>
 
-  <div class="output-section">
+  <div class="section">
     <h3>Análisis Léxico</h3>
-    <input type="text" id="lexico" readonly />
+    <pre id="lexico"></pre>
   </div>
 
-  <div class="output-section">
+  <div class="section">
     <h3>Análisis Sintáctico</h3>
-    <input type="text" id="sintactico" readonly />
+    <pre id="sintactico"></pre>
   </div>
 
-  <div class="output-section">
-    <h3>Árbol Sintáctico (Texto)</h3>
-    <pre id="arbol"></pre>
-  </div>
-
-  <div class="output-section">
-    <h3>Árbol Sintáctico (Gráfico)</h3>
-    <div class="mermaid" id="arbolGrafico"></div>
-  </div>
-
-  <div class="output-section">
+  <div class="section">
     <h3>Tabla de Tokens</h3>
     <pre id="tablaTokens"></pre>
   </div>
 
-  <div class="output-section">
-    <h3>Tabla de Símbolos</h3>
-    <div id="tablaSimbolos"></div>
+  <div class="section">
+    <h3>Árbol Sintáctico (SVG)</h3>
+    <svg id="arbol" width="1000" height="300"></svg>
   </div>
 
   <script>
-    mermaid.initialize({ startOnLoad: false });
-
     function analizar() {
       const codigo = document.getElementById("codigo").value.trim();
+      if (!codigo) return;
 
-      if (!codigo) {
-        alert("Por favor, escribe un bloque de código.");
-        return;
-      }
+      const tokens = analizarLexico(codigo);
+      const arbol = construirArbol(tokens);
 
-      document.getElementById("lexico").value = "[Léxico válido]";
-      document.getElementById("sintactico").value = "[Sintaxis correcta]";
+      document.getElementById("lexico").textContent = JSON.stringify(tokens, null, 2);
+      document.getElementById("tablaTokens").textContent = "TOKEN\tTIPO\n" + tokens.map(t => `${t.valor}\t${t.tipo}`).join("\n");
+      document.getElementById("sintactico").textContent = "[Sintaxis correcta]"; // Simple demo
 
-      const arbolTexto = `
-<grammar prog>
- └── prog
-     ├── stat
-     │   ├── x =
-     │   └── expr → 1
-     ├── stat
-     │   ├── y =
-     │   └── expr → 2
-     └── stat
-         ├── expr
-         │   ├── 3 *
-         │   └── ( x + y )`;
-      document.getElementById("arbol").textContent = arbolTexto;
-
-      const mermaidDiagram = `graph TD
-  A[prog] --> B1[stat: x = 1]
-  A --> B2[stat: y = 2]
-  A --> B3[stat]
-  B3 --> C1[expr: 3 *]
-  C1 --> C2[(x + y)]`;
-
-      document.getElementById("arbolGrafico").textContent = mermaidDiagram;
-      mermaid.init(undefined, "#arbolGrafico");
-
-      document.getElementById("tablaTokens").textContent = `Token       | Tipo
------------|----------------
-int        | Palabra reservada
-a          | Identificador
-=          | Operador de asignación
-5          | Número
-;          | Delimitador`;
-
-      document.getElementById("tablaSimbolos").innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Símbolo</th>
-              <th>Tipo</th>
-              <th>Valor</th>
-              <th>Línea</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>x</td><td>Identificador</td><td>-</td><td>1</td></tr>
-            <tr><td>y</td><td>Identificador</td><td>-</td><td>2</td></tr>
-            <tr><td>a</td><td>Identificador</td><td>5</td><td>3</td></tr>
-            <tr><td>b</td><td>Identificador</td><td>10</td><td>4</td></tr>
-            <tr><td>suma</td><td>Identificador</td><td>-</td><td>5</td></tr>
-          </tbody>
-        </table>`;
+      graficarArbol(arbol);
     }
 
     function limpiar() {
       document.getElementById("codigo").value = "";
-      document.getElementById("lexico").value = "";
-      document.getElementById("sintactico").value = "";
-      document.getElementById("arbol").textContent = "";
-      document.getElementById("arbolGrafico").textContent = "";
+      document.getElementById("lexico").textContent = "";
+      document.getElementById("sintactico").textContent = "";
       document.getElementById("tablaTokens").textContent = "";
-      document.getElementById("tablaSimbolos").innerHTML = "";
+      document.getElementById("arbol").innerHTML = "";
+    }
+
+    function analizarLexico(codigo) {
+      const palabras = codigo.split(/\s+/);
+      const reservadas = ["int", "float", "if", "else"];
+      const tokens = [];
+      for (let palabra of palabras) {
+        if (reservadas.includes(palabra))
+          tokens.push({ tipo: "Reservada", valor: palabra });
+        else if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(palabra))
+          tokens.push({ tipo: "Identificador", valor: palabra });
+        else if (/^\d+$/.test(palabra))
+          tokens.push({ tipo: "Número", valor: palabra });
+        else
+          tokens.push({ tipo: "Símbolo", valor: palabra });
+      }
+      return tokens;
+    }
+
+    function construirArbol(tokens) {
+      return {
+        tipo: "prog",
+        hijos: [
+          {
+            tipo: "stat",
+            hijos: [
+              { tipo: "x" },
+              { tipo: "=" },
+              {
+                tipo: "expr",
+                hijos: [
+                  { tipo: "1" }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+    }
+
+    function graficarArbol(nodo, x = 500, y = 20, nivel = 0, padre = null, id = {i: 0}) {
+      const svg = document.getElementById("arbol");
+      if (nivel === 0) svg.innerHTML = "";
+
+      const thisId = "nodo" + (id.i++);
+      const circle = `<circle cx="${x}" cy="${y}" r="15" fill="#e3e3ff" stroke="#333"/>`;
+      const label = `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="12">${nodo.tipo}</text>`;
+      svg.innerHTML += circle + label;
+
+      if (padre) {
+        svg.innerHTML += `<line x1="${padre.x}" y1="${padre.y + 15}" x2="${x}" y2="${y - 15}" stroke="#000" />`;
+      }
+
+      if (nodo.hijos) {
+        const ancho = 120 * nodo.hijos.length;
+        let startX = x - (ancho / 2);
+        for (let hijo of nodo.hijos) {
+          graficarArbol(hijo, startX + 60, y + 70, nivel + 1, { x, y }, id);
+          startX += 120;
+        }
+      }
     }
   </script>
 </body>
